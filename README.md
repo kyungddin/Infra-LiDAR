@@ -64,7 +64,7 @@
 
 ### 3.1. OSI 7 Layer Network Model
 
-<img src="osi7.png">
+<img src="img/osi7.png">
 
 - 자율주행 시스템 내의 데이터 통신을 설계하기 위해 OSI 7 계층 모델을 참조하였다. 본 프로젝트에서는 물리 계층(Physical Layer)과 데이터 링크 계층(Data Link Layer) 위에 IP 기반의 네트워크 계층(Network Layer)을 구성하고, 전송 계층(Transport Layer)에서 프로세스 간 통신을 수행한다. 응용 계층(Application Layer)에서는 파싱된 LiDAR 데이터를 정의된 패킷 구조에 담아 전송하는 역할을 수행한다.
 
