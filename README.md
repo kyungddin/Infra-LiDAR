@@ -37,7 +37,7 @@
 
 ### 2.1. ROS Middleware & Docker
 
-<img src="img/x2.png">
+<img src="img/x2.png" width="600">
 
 - 본 프로젝트에서는 자율주행 시스템의 핵심 센서인 LiDAR 데이터를 효율적으로 처리하기 위해 로봇 Middleware인 ROS(Robot Operating System) Noetic 버전을 사용하였다. Infra LiDAR 시스템은 2차선 도로 정보를 실시간으로 수집하여 자율주행 차량에 전달하는 역할을 수행한다. LiDAR 센서(YDLiDAR X2)는 PC와 USB 인터페이스를 통해 UART 시리얼 통신으로 연결되며, ROS의 노드(Node) 구조를 활용하여 하드웨어 추상화를 구현하였다. 이를 통해 하드웨어 종속성을 줄이고, 다양한 프로세스 간의 데이터 통신을 토픽(Topic)이라는 메시지 형태로 주고받을 수 있는 환경을 구축하였다.
 
