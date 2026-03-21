@@ -37,6 +37,8 @@
 
 ### 2.1. ROS Middleware & Docker
 
+<img src="img/x2.png" width="300">
+
 - 본 프로젝트에서는 자율주행 시스템의 핵심 센서인 LiDAR 데이터를 효율적으로 처리하기 위해 로봇 Middleware인 ROS(Robot Operating System) Noetic 버전을 사용하였다. Infra LiDAR 시스템은 2차선 도로 정보를 실시간으로 수집하여 자율주행 차량에 전달하는 역할을 수행한다. LiDAR 센서(YDLiDAR X2)는 PC와 USB 인터페이스를 통해 UART 시리얼 통신으로 연결되며, ROS의 노드(Node) 구조를 활용하여 하드웨어 추상화를 구현하였다. 이를 통해 하드웨어 종속성을 줄이고, 다양한 프로세스 간의 데이터 통신을 토픽(Topic)이라는 메시지 형태로 주고받을 수 있는 환경을 구축하였다.
 
 - 일반적으로 임베디드 리눅스 환경에서는 다수의 센서와 라이브러리를 연동하는 과정에서 패키지 간의 의존성 충돌(Dependency Conflict)이나 OS 업데이트에 따른 버전 호환성 문제가 빈번하게 발생한다. 특히 ROS Noetic은 Ubuntu 20.04 및 특정 Python 버전(Python 3.8 등)에 종속적이기 때문에, 호스트 OS의 변경으로부터 개발 환경을 보호할 필요가 있다.
@@ -44,6 +46,9 @@
 - 이에 본 연구에서는 Docker 컨테이너 기술을 도입하여 ROS 구동 환경을 가상화하였다. Docker를 활용함으로써 ROS Core, 통신 노드(Node), 그리고 필수 드라이버가 설치된 독립적인 이미지(Image)를 빌드하여 컨테이너화하였으며, 이를 통해 호스트 시스템의 환경 변화와 무관하게 동일한 동작을 보장하는 시스템 안정성을 확보하였다. 또한, 개발 단계에서 검증된 패키지 버전을 그대로 배포 및 관리할 수 있어, 협업 및 유지보수 측면에서의 효율성을 극대화하였다.
 
 ### 2.2. Data Parsing with ROS Topic
+
+<img src="img/topic.png">
+<img src="img/scan.png">
 
 - LiDAR 센서로부터 수집된 Raw 데이터는 ROS의 표준 메시지 타입인 sensor_msgs/LaserScan 형태로 발행(Publish)된다. 본 연구에서는 /scan 토픽을 구독(Publish)하여 데이터를 취득하였다. 데이터 파싱을 위해 Python 라이브러리인 rospy를 활용하였으며, /scan 메시지에 포함된 여러 정보 중 장애물 및 차선 인식에 필수적인 거리 정보(range)와 반사 강도(intensity) 데이터를 추출하였다. ranges 데이터는 센서를 중심으로 360도 전방위의 거리 값을 배열 형태로 포함하고 있으며, 유효 거리(0.5 m ~ 50 m) 내의 데이터만을 필터링하여 노이즈를 제거하는 전처리 과정을 거쳤다.
 
@@ -58,6 +63,8 @@
 ## 3. UDP Socket Communication
 
 ### 3.1. OSI 7 Layer Network Model
+
+<img src="osi7.png">
 
 - 자율주행 시스템 내의 데이터 통신을 설계하기 위해 OSI 7 계층 모델을 참조하였다. 본 프로젝트에서는 물리 계층(Physical Layer)과 데이터 링크 계층(Data Link Layer) 위에 IP 기반의 네트워크 계층(Network Layer)을 구성하고, 전송 계층(Transport Layer)에서 프로세스 간 통신을 수행한다. 응용 계층(Application Layer)에서는 파싱된 LiDAR 데이터를 정의된 패킷 구조에 담아 전송하는 역할을 수행한다.
 
@@ -81,6 +88,8 @@
     - 본 프로젝트는 교내 공용 WiFi(Smart-CAU) 환경에서 진행되었다. 공용 네트워크는 DHCP(Dynamic Host Configuration Protocol)를 사용하여 기기 접속 시마다 IP 주소가 동적으로 변경되는 문제가 있었다. 이는 고정된 IP로 통신해야 하는 UDP Socket 통신에 치명적이다. 이를 해결하기 위해 가상 사설망(VPN) 솔루션인 ZeroTier를 도입하였다. ZeroTier를 통해 PC와 Raspberry Pi를 동일한 가상 네트워크 대역(172.23.xxx.xxx)으로 묶어 고정 IP를 할당함으로써, 물리적 네트워크 환경 변화와 무관하게 안정적인 통신 채널을 확보하였다.
 
 - UDP Datagram Structure
+
+<img src="img/datagram.png">
     - 전송 효율을 높이기 위해 데이터 패킷 구조를 최적화하였다. 패킷은 헤더(Header)와 페이로드(Payload)로 구성되며, 리틀 엔디안(Little Endian) 방식으로 직렬화하였다.
         - Header (4 Bytes): 패킷의 시작을 알리는 식별자 0xAA, 0x55 (2 Bytes)와 포함된 포인트의 개수 (2 Bytes)로 구성된다.
         - Payload (9 Bytes per Point): 각 포인트는 X좌표(float, 4 Bytes), Y좌표(float, 4 Bytes), 반사 강도(uint8, 1 Bytes)로 구성된다.
@@ -92,9 +101,13 @@
 
 ### 4.1. Circuit Connection and Components
 
+<img src="img/circuit.png">
+
 - 자율주행 차량의 제어 명령을 전달하기 위해 차량용 네트워크 표준인 CAN(Controller Area Network) 통신을 사용하였다. 메인 제어기인 Raspberry Pi에는 'Dual-CH CAN HAT' 확장 보드를 장착하여 CAN 트랜시버(MCP2515) 기능을 수행하게 하였으며, 하위 제어기인 Arduino UNO에는 CAN-BUS Shield를 연결하였다. CAN High와 CAN Low 라인 사이에는 신호 반사를 방지하기 위해 120 Ω의 종단 저항을 필요로 하는데, Raspberry Pi의 확장 보드에서는 이러한 종단 저항을 점퍼 스위치를 활성화하는 것으로 종단 저항 추가가 가능하였다.
 
 ### 4.2. CAN Pipeline
+
+<img src="img/can_pipeline.png">
 
 - 데이터 처리 부하를 분산하고 실시간 제어를 수행하기 위해 다음과 같은 파이프라인을 구축하였다.
     - Raspberry Pi (Main Controller): 센서 데이터를 기반으로 목표 조향각과 속도를 연산하여 CAN 메시지를 생성 및 송신한다.
@@ -112,6 +125,8 @@
 ## 5. ROS Driving Simulation
 
 ### 5.1. FSM
+
+<img src="img/FSM.png">
 
 - 본 프로젝트에서는 전방 장애물 유무와 주변 차선(1차선)의 여유 공간 상태에 따라 자율주행 차량의 제어 모드를 결정하기 위해 다음과 같은 유한 상태 머신(FSM)을 설계하였다. 시스템은 기본적으로 2차선 주행을 유지하며, 센서 데이터를 기반으로 Cruise, Evade, Blocked, Return의 4가지 상태로 천이한다.
 
@@ -137,5 +152,7 @@
 - 시뮬레이션 검증을 위해 ROS의 시각화 도구인 Rviz를 활용하였다. 가상의 차량 모델과 차선, 장애물을 visualization_msgs/Marker 토픽으로 정의하여 3차원 공간상에 시각화하였다. 이를 통해 센서 데이터의 정합성과 제어 알고리즘의 동작(경로 생성, 조향각 변화)을 실시간으로 모니터링할 수 있는 환경을 구축하였다.
 
 ### 5.3. ROS Simulation
+
+<img src="img/sim.png">
 
 - 본 프로젝트에서는 주행 중 동적/정적 장애물 회피를 위해 모델 예측 제어(MPC) 기법을 적용하였다. MPC는 차량의 기구학적 모델을 바탕으로 미래의 거동을 예측하고, 제약 조건(조향각 한계, 속도 한계)을 만족하면서 목적 함수(장애물과의 거리 최대화, 경로 이탈 최소화)를 최소화하는 최적 제어 입력을 산출한다. 시뮬레이션 결과, 전방 장애물 감지 시 MPC 알고리즘이 즉각적으로 회피 경로를 생성하여 충돌 없이 장애물을 통과함을 확인하였다. 이후 차량이 불안정한 자세로 회피를 마친 직후에는 PID 제어기로 전환하여, 급격한 오버슈트 없이 부드럽게 원래 차선인 2차선으로 복귀(Line Tracing)하는 안정적인 주행 성능을 검증하였다.
